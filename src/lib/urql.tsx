@@ -1,9 +1,20 @@
-import { cacheExchange, dedupExchange } from "@urql/core";
-import { multipartFetchExchange } from "@urql/exchange-multipart-fetch";
+import { defaultExchanges, subscriptionExchange } from "@urql/core";
 import { createClient } from "urql";
+import { createClient as createWSClient } from "graphql-ws";
 import config from "../config";
-
+const wsClient = createWSClient({
+  url: "ws://localhost:4000/graphql",
+});
 export const clientUrql = createClient({
   url: config.GRAPHQL_URL,
-  exchanges: [dedupExchange, cacheExchange, multipartFetchExchange],
+  exchanges: [
+    ...defaultExchanges,
+    subscriptionExchange({
+      forwardSubscription: (operation) => ({
+        subscribe: (sink) => ({
+          unsubscribe: wsClient.subscribe(operation, sink),
+        }),
+      }),
+    }),
+  ],
 });

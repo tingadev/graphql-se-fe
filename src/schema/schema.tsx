@@ -13,10 +13,12 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
+  DateTime: any;
 };
 
 export type Mutation = {
   createUser: User;
+  deleteUser: Scalars['String'];
 };
 
 
@@ -24,10 +26,22 @@ export type MutationCreateUserArgs = {
   data: NewUserInput;
 };
 
+
+export type MutationDeleteUserArgs = {
+  id: Scalars['String'];
+};
+
 export type NewUserInput = {
   email: Scalars['String'];
   firstname: Scalars['String'];
   lastname: Scalars['String'];
+};
+
+export type NotificationObject = {
+  date: Scalars['DateTime'];
+  id: Scalars['String'];
+  message?: Maybe<User>;
+  type: Scalars['String'];
 };
 
 export type Query = {
@@ -40,9 +54,14 @@ export type QueryGetUserArgs = {
   id: Scalars['String'];
 };
 
+export type Subscription = {
+  newNotification: NotificationObject;
+};
+
 export type User = {
   email: Scalars['String'];
   firstname: Scalars['String'];
+  fullname: Scalars['String'];
   id: Scalars['String'];
   lastname: Scalars['String'];
 };
@@ -53,6 +72,7 @@ export const UserFragmentDoc = gql`
   email
   id
   lastname
+  fullname
 }
     `;
 export const GetUserDocument = gql`
@@ -77,16 +97,37 @@ export const GetUsersDocument = gql`
 export function useGetUsersQuery(options?: Omit<Urql.UseQueryArgs<GetUsersQueryVariables>, 'query'>) {
   return Urql.useQuery<GetUsersQuery, GetUsersQueryVariables>({ query: GetUsersDocument, ...options });
 };
-export type UserFragment = { firstname: string, email: string, id: string, lastname: string };
+export const NewNotificationDocument = gql`
+    subscription newNotification {
+  newNotification {
+    id
+    message {
+      ...User
+    }
+    date
+    type
+  }
+}
+    ${UserFragmentDoc}`;
+
+export function useNewNotificationSubscription<TData = NewNotificationSubscription>(options: Omit<Urql.UseSubscriptionArgs<NewNotificationSubscriptionVariables>, 'query'> = {}, handler?: Urql.SubscriptionHandler<NewNotificationSubscription, TData>) {
+  return Urql.useSubscription<NewNotificationSubscription, TData, NewNotificationSubscriptionVariables>({ query: NewNotificationDocument, ...options }, handler);
+};
+export type UserFragment = { firstname: string, email: string, id: string, lastname: string, fullname: string };
 
 export type GetUserQueryVariables = Exact<{
   id: Scalars['String'];
 }>;
 
 
-export type GetUserQuery = { getUser: { firstname: string, email: string, id: string, lastname: string } };
+export type GetUserQuery = { getUser: { firstname: string, email: string, id: string, lastname: string, fullname: string } };
 
 export type GetUsersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetUsersQuery = { getUsers: Array<{ firstname: string, email: string, id: string, lastname: string }> };
+export type GetUsersQuery = { getUsers: Array<{ firstname: string, email: string, id: string, lastname: string, fullname: string }> };
+
+export type NewNotificationSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type NewNotificationSubscription = { newNotification: { id: string, date: any, type: string, message?: { firstname: string, email: string, id: string, lastname: string, fullname: string } | null } };
